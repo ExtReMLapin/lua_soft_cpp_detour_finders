@@ -8,6 +8,8 @@ Then you can use the generated file to check if any cpp function was detoured.
 
 Obviously, it's reboot/changelevel proof, that's the whole point of detecting the offset, eh.
 
+The built DB is probably not exportable to another os/build target
+
 ![](https://i.imgur.com/xXH2lTQ.gif)
 
 

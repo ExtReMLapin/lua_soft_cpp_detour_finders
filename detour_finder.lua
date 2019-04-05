@@ -1,119 +1,60 @@
-local g_funcs	=	{
-		SetPhysConstraintSystem	=	110328,
-		SetGlobalVar	=	110992,
-		LerpVector	=	114072,
-		DeriveGamemode	=	109976,
-		Error	=	106728,
-		SetGlobal2Var	=	113232,
-		OrderVectors	=	114000,
-		isentity	=	108352,
-		GetGlobalString	=	112072,
-		SetGlobalInt	=	111136,
-		RealTime	=	109112,
-		ProtectedCall	=	109840,
-		ismatrix	=	108480,
-		DebugInfo	=	106480,
-		RunString	=	107608,
-		ispanel	=	108416,
-		GetGlobal2Entity	=	113160,
-		isstring	=	107968,
-		EffectData	=	110864,
-		isfunction	=	108288,
-		GetGlobal2Int	=	112296,
-		ParticleEffectAttach	=	109536,
-		LerpAngle	=	110608,
-		SysTime	=	107344,
-		Vector	=	113936,
-		HSVToColor	=	107480,
-		isvector	=	108096,
-		Msg	=	106544,
-		SetGlobal2Entity	=	113088,
-		GetGlobalAngle	=	111856,
-		PrintMessage	=	110408,
-		CreatePhysCollideBox	=	113440,
-		SetGlobal2Int	=	112224,
-		CompileString	=	107736,
-		GetHostName	=	113376,
-		GetGlobalEntity	=	112000,
-		GetGlobalVector	=	111784,
-		AddOriginToPVS	=	108760,
-		Entity	=	110672,
-		IsFirstTimePredicted	=	109240,
-		BroadcastLua	=	110120,
-		SetGlobalAngle	=	111352,
-		GetGlobal2Var	=	113304,
-		Player	=	113600,
-		GetGlobalBool	=	111928,
-		IsEntity	=	110192,
-		type	=	107872,
-		SetGlobalEntity	=	111424,
-		MsgN	=	106664,
-		ErrorNoHalt	=	106792,
-		Path	=	114136,
-		CreateConVar	=	107064,
-		isangle	=	108160,
-		include	=	106856,
-		Matrix	=	110800,
-		GetConVar_Internal	=	107136,
-		RunStringEx	=	107672,
-		RecipientFilter	=	114200,
-		isnumber	=	108032,
-		SetGlobal2Angle	=	112944,
-		CurTime	=	109048,
-		AddConsoleCommand	=	110256,
-		TypeID	=	109776,
-		GetGlobal2Angle	=	113016,
-		ConVarExists	=	106920,
-		GetGlobal2String	=	112728,
-		PrecacheParticleSystem	=	109384,
-		isbool	=	108224,
-		GetGlobalFloat	=	111640,
-		HTTP	=	109912,
-		MsgC	=	106600,
-		DropEntityIfHeld	=	108688,
-		PrecacheScene	=	108832,
-		SuppressHostEvents	=	108904,
-		UnPredictedCurTime	=	108976,
-		FrameTime	=	109176,
-		GetGlobal2Bool	=	112584,
-		CompileFile	=	109320,
-		ParticleEffect	=	109464,
-		RunConsoleCommand	=	107272,
-		SetGlobalString	=	111064,
-		LocalToWorld	=	108544,
-		CreatePhysCollidesFromModel	=	113520,
-		PrecacheSentenceFile	=	109616,
-		PrecacheSentenceGroup	=	109696,
-		ColorToHSV	=	107544,
-		ServerLog	=	106416,
-		istable	=	107904,
-		SetGlobal2Bool	=	112512,
-		MsgAll	=	110480,
-		AddCSLuaFile	=	110048,
-		GetGlobalVar	=	111568,
-		GetGlobal2Float	=	112440,
-		EmitSound	=	113872,
-		VC‪‪‪‪‪‪‪‪‪‪‪‪	=	107608,
-		DamageInfo	=	110928,
-		SetGlobalFloat	=	111208,
-		SetGlobalBool	=	111496,
-		FindMetaTable	=	106992,
-		EmitSentence	=	113800,
-		BuildNetworkedVarsTable	=	112144,
-		SetGlobal2Float	=	112368,
-		CreateSound	=	113664,
-		GetGlobal2Vector	=	112872,
-		VGUIFrameTime	=	107408,
-		GetGlobalInt	=	111712,
-		module	=	0,
-		WorldToLocal	=	108616,
-		Angle	=	110544,
-		SetGlobal2String	=	112656,
-		SetGlobal2Vector	=	112800,
-		require	=	107808,
-		SetGlobalVector	=	111280,
-		SoundDuration	=	113728,
-}
+function isFuncCPP(func)
+	return debug.getinfo(func).source == "=[C]"
+end
+
+function isFuncNative(func)
+	return string.StartWith(tostring(func),"function: builtin#")
+end
+
+function getFuncAddr(func)
+	if (type(func) != "function") then error("Expecting a function") end
+	if (isFuncCPP(func) == false ) then error("Expecting a CPP/C function") end
+	local str = tostring(func)
+	if (string.StartWith(str,"function: builtin#")) then
+		str = string.Right(str, string.len(str) - 18)
+		return tonumber(str)
+	elseif (string.StartWith(str,"function: 0x")) then
+		str = string.Right(str, string.len(str) - 10)
+		local num = tonumber(str);
+		return num
+	else
+		error"WTF"
+	end
+end
+
+
+local tbl = {}
+
+local lowerval = -1
+local lowertext = ""
+
+print("Finding function with lower address ...")
+
+for k, v in pairs(_G) do
+	if (type(v) != "function") then continue end
+	if (isFuncCPP(v) == false ) then continue end
+	if (isFuncNative(v) == true ) then continue end
+	local num = getFuncAddr(v)
+	tbl[k] = num
+
+	if (lowerval == -1 or num < lowerval) then
+		lowerval = num
+		lowertext = k
+	end
+
+end
+
+print("Lower func in _G is " .. lowertext .. "()")
+
+local base_offset = lowerval
+print("Rebuilding table with detected offset of " .. base_offset)
+for k , v in pairs(tbl) do
+	tbl[k] = tbl[k] - base_offset
+end
+
+
+local _outstr = "local " .. table.ToString(tbl,"g_funcs", true) .. [[
+
 
 local func_comparer = nil; -- function in the _G
 local lfunccomp_addr = 0; -- function addr saved in the table
@@ -146,3 +87,9 @@ end
 
 print("Done.")
 
+]]
+
+
+file.Write("saved_funcs_addr.txt",_outstr )
+
+print("Wrote table to saved_funcs_addr.txt")

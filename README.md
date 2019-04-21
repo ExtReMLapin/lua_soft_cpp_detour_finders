@@ -1,4 +1,8 @@
 # lua_soft_detour_finders POC
+
+
+# **ITS A PROOF OF CONCEPT, NOT A PIECE OF CODE MEANT TO BE USED AS A SECURITY LAYER**
+
 POC detecting c/cpp function being detoured using a cpp module by checking the address of the function
 
 
